@@ -1,0 +1,38 @@
+---
+title: A non-standard syntax of numerals in the Russian speech of Nanai and Ulcha
+  speakers
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+##Loading and preparing the dataset
+```{r}
+setwd("D:/R_docs")
+numerals <- read.csv("tung_rus_numerals.csv", header = TRUE, as.is = FALSE)
+##releveling process: reference levels -- those predisposing to the genitive encoding
+numerals$pattern <- relevel(numerals$pattern, ref = "rus")
+numerals$num_type <- relevel(numerals$num_type, ref = "gen_pl")
+numerals$num_semantics <- relevel(numerals$num_semantics, ref = "large")
+numerals$noun_semantics <- relevel(numerals$noun_semantics, ref = "time&measure")
+```
+##Logistic regression model
+```{r}
+#Model0 - the initial full model with all possible predictors
+glm_numerals <- glm (pattern ~ num_type + num_semantics + noun_semantics, data = numerals, family ="binomial")
+#All predictors except for num_type appear to have significant effects
+summary(glm_numerals)
+```
+##Tuning the model using the Akaike Information Criterion (AIC)
+```{r}
+#The predictors will be dropped from the initial model one by one. The predictor can be dropped (=irrelevant for the model) if its absence reduces the AIC value.
+drop1(glm_numerals)
+#num_type should be dropped, since its absence reduces the AIC value (391.12)
+#Model 1: without num_type
+glm_numerals1 <- glm (pattern ~ num_semantics + noun_semantics, data = numerals, family ="binomial")
+#Both num_semantics and noun_semantics have significant effects
+summary(glm_numerals1)
+#Model 1 is optimal, since no more predictors can be dropped: its AIC value (391.12) is smaller than those of the models dropping num_semantics or noun_semantics.
+drop1(glm_numerals1)
+```
